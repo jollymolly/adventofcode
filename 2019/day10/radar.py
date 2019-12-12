@@ -33,6 +33,52 @@ def count_visible_asteroids(m, x1, y1, WIDTH, HEIGHT):
     return visible_count
 
 
+def vaporize_asteroids(m, cannon_x, cannon_y, WIDTH, HEIGHT, vaporized_num):
+
+    asteroids_by_quadrant_angle = dict()
+    
+    for y in range(HEIGHT):
+        for x in range(WIDTH):
+            if m[y][x] == ASTEROID_SYM and (y, x) != (cannon_y, cannon_x):
+                y_len, x_len = y-cannon_y, x-cannon_x 
+                angle = -90 if (cannon_x == x or cannon_y == y) else y_len/x_len
+                if x >= cannon_x and y < cannon_y:
+                    quadrant = 0
+                elif x > cannon_x and y >= cannon_y:
+                    quadrant = 1
+                elif x <= cannon_x and y > cannon_y:
+                    quadrant = 2
+                elif x < cannon_x and y <= cannon_y:
+                    quadrant = 3
+                asteroids_by_quadrant_angle.setdefault((quadrant, angle), []).append((y, x))
+
+    for k in asteroids_by_quadrant_angle:
+        asteroids_by_quadrant_angle[k] = sorted(
+            asteroids_by_quadrant_angle[k],
+            key=lambda point: ((cannon_y-point[0])**2+(cannon_x-point[1])**2)**0.5
+        )
+
+    vaporized_count, ret_val = 0, None
+
+    while asteroids_by_quadrant_angle:
+
+        for k in sorted(asteroids_by_quadrant_angle.keys()):
+
+            if len(asteroids_by_quadrant_angle[k]) == 0:
+                del(asteroids_by_quadrant_angle[k])
+                continue
+
+            y, x = asteroids_by_quadrant_angle[k].pop(0)
+
+            vaporized_count += 1
+            if vaporized_count == vaporized_num:
+                ret_val = y, x
+                asteroid_by_quadrant_angle = None
+                break
+
+    return ret_val
+
+        
 if __name__ == "__main__":
 
     with open("input.txt") as f:
@@ -55,3 +101,5 @@ if __name__ == "__main__":
                 max_visible, coordinates = visibility_map[y][x], (x, y)
 
     print(f"max visible asteroids: {max_visible} at {coordinates}.")
+    y, x = vaporize_asteroids(m, coordinates[0], coordinates[1], X, Y, 200)
+    print(f"result: {x*100+y}.")
