@@ -1,0 +1,182 @@
+#!python3
+
+import time
+import hal
+import random
+
+
+NORTH = 1
+SOUTH = 2
+WEST = 3
+EAST = 4
+
+WALL = 0
+STEP = 1
+OXYGEN = 2
+
+direction_loop = (NORTH, EAST, SOUTH, WEST)
+direction_desc = {1: "NORTH", 2: "SOUTH", 3: "WEST", 4: "EAST"}
+wall_count = 0
+
+if __name__ == "__main__":
+
+    instructions = None
+    
+    with open("input.txt") as f:
+        instructions = list(map(int, f.readline().strip().split(',')))
+
+    if not instructions:
+        print("No insturctions to run.")
+        
+    hal.ComputingUnit.init_instruction_handlers()
+
+    cu = hal.ComputingUnit(instructions)
+
+    width, height = 200, 200
+    screen = [ [' '] * width for _ in range(height)]
+    droid_y, droid_x, background = height-20, width // 2, ' '
+
+    screen[droid_y][droid_x] = 'D'
+    start_y, start_x = droid_y, droid_x
+
+    direction_idx = 0
+    direction = direction_loop[direction_idx]
+
+    next_y, next_x = -1, -1
+
+    direction_came_from = None
+    tried_directions = set()
+    build_wall = False
+    path = set()
+    steps_count = 0
+    direction_indices = (0, 1, 2, 3)
+    it = 0
+
+    blind_spots = list()
+    
+    while not cu.completed:
+
+        if next_y+1 == height or next_x+1 == width \
+           or next_y-1 < 0 or next_x-1 < 0 \
+           or screen[next_y][next_x] in ('#', 'O'):
+            result = WALL
+        else:
+            cu.stdin = (str(direction), )
+            cu.execute()
+            result = cu.stdout[-1]
+
+        y, x = droid_y, droid_x
+
+        if direction in (NORTH, SOUTH):
+            droid_y += -1 if direction == NORTH else 1
+        else:
+            droid_x += -1 if direction == WEST else 1
+
+        if result == WALL:
+            screen[droid_y][droid_x] = '#'
+
+            while True:
+
+                direction_idx = (direction_idx + 1) % len(direction_loop)
+                
+                direction = direction_loop[direction_idx]
+                tried_directions.add(direction)
+
+                if direction_came_from is None:
+                    break
+
+                if len(tried_directions) == 4:
+                    build_wall = True
+                    direction_idx = direction_loop.index(direction_came_from)
+                    direction = direction_loop[direction_idx]
+                    break
+                
+                if direction == direction_came_from:
+                    continue
+                
+                break 
+
+            droid_y, droid_x = y, x
+
+        elif result == STEP:
+            
+            screen[droid_y][droid_x] = 'D'
+            if (droid_y, droid_x) in path:
+                steps_count -= 1
+                path.discard((droid_y, droid_x))
+            else:
+                steps_count += 1
+                path.add((droid_y, droid_x))
+
+            path.add((droid_y, droid_x))
+            if droid_y == y:
+                direction_came_from = EAST if droid_x < x else WEST
+            else:
+                direction_came_from = SOUTH if droid_y < y else NORTH
+            incr = 0 if it % 2 == 0 else int(random.random()*4)
+            direction_idx = (direction_loop.index(direction)+ incr) % len(direction_loop)
+            direction = direction_loop[direction_idx]
+
+            screen[y][x] = '#' if build_wall else '.'
+            build_wall = False
+            tried_directions.clear()
+            it += 1
+        elif result == OXYGEN:
+            screen[droid_y][droid_x] = 'O'
+            droid_y, droid_x = y, x
+#            for l in screen:
+#                print("".join(l))
+            print(f"Oxygen: {droid_y}, {droid_x}.")
+
+            continue
+
+        if it and it % 100 == 0:
+            for l in screen:
+                print("".join(l))
+            input()
+
+        next_y, next_x = droid_y, droid_x
+
+        if direction in (SOUTH, NORTH):
+            next_y += 1 if direction == SOUTH else -1
+        else:
+            next_x += 1 if direction == EAST else -1
+
+    for l in screen:
+        print("".join(l))
+
+# Breadth search impl. - turned out to be unneeded at all
+#
+#    places = list(((start_y, start_x, 0),))
+#    paths = dict()
+#
+#    oxygen_y, oxygen_x = y, x
+#    iter = 0
+#    while places:
+
+#        y, x, steps_count = places.pop(0)
+
+#        iter += 1
+
+#        if screen[y][x] == "D":
+#            print((y, x, steps_count))
+
+#        neighbors = set()
+        
+#        for neighbor_y, neighbor_x in (
+#                (y+1, x), (y-1, x), (y, x+1), (y, x-1)
+#        ):
+#            if screen[neighbor_y][neighbor_x] in ('.', 'D'):
+
+#                if (neighbor_y, neighbor_x) in paths \
+#                   and (y, x) in paths[neighbor_y, neighbor_x]:
+#                    continue
+
+#                steps = steps_count + 1
+
+#                paths.setdefault((neighbor_y, neighbor_x), dict())[y, x] = steps
+#                paths.setdefault((y, x), dict())[neighbor_y, neighbor_x] = steps
+#                places.append((neighbor_y, neighbor_x, steps))
+
+
+    print(f"y, x: {droid_y}, {droid_x}. steps: {steps_count+1}. ") #paths steps: {paths[oxygen_y, oxygen_x]}. Done.")
