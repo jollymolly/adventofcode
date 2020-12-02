@@ -19,17 +19,14 @@ if __name__ == "__main__":
         print(f"Not enough input values: {len_nums}.")
         sys.exit(2)
         
-    n1, n2 = None, None
+    answer = next(
+        (nums[n1] * nums[n2] * nums[n3]
+         for n1 in range(len_nums-2)
+         for n2 in range(n1+1, len_nums-1)
+         for n3 in range(n2+1, len_nums)
+         if nums[n1] + nums[n2] + nums[n3] == _TARGET_NUM),
+        None
+    )
 
-    try:
-        for n1 in range(len_nums-1):
-            n1_num = nums[n1]
-            for n2 in range(n1+1, len_nums):
-                if n1_num + nums[n2] == _TARGET_NUM:
-                    raise StopIteration("Found target numbers.")
-    except StopIteration:
-        pass
-    
-    print(f"num1[{n1}]: {nums[n1]}; num2[{n2}]: {nums[n2]}.")
-    print("result: {0}".format(nums[n1] * nums[n2] if n1 is not None and n2 is not None else None))
+    print(f"Answer: {answer}.")
 
