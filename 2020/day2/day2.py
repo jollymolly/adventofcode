@@ -7,15 +7,15 @@ def parse(line: str):
 
     desc, pwd = line.split(':')
     rng, ch = desc.split(' ')
-    min, max = rng.split('-')
+    pos1, pos2 = rng.split('-')
     
-    return int(min), int(max), ch, pwd.strip()
+    return int(pos1)-1, int(pos2)-1, ch, pwd.strip()
 
 
-def validate(min: int, max: int, ch: str, pwd: str) -> int:
+def validate(pos1: int, pos2: int, ch: str, pwd: str) -> int:
     
-    ch_count = pwd.count(ch)
-    return int(min <= ch_count and ch_count <= max)
+    pos1_ch, pos2_ch = pwd[pos1], pwd[pos2]
+    return int(pos1_ch != pos2_ch and (pos1_ch == ch or pos2_ch == ch))
 
 
 if __name__ == "__main__":
@@ -28,8 +28,8 @@ if __name__ == "__main__":
 
     with open(sys.argv[1]) as inp:
         for line in inp:
-            min, max, ch, pwd = parse(line)
-            valid_pwd_count += validate(min, max, ch, pwd)
+            pos1, pos2, ch, pwd = parse(line)
+            valid_pwd_count += validate(pos1, pos2, ch, pwd)
 
     print(f"Answer: {valid_pwd_count}.")
 
