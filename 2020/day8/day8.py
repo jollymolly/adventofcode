@@ -2,12 +2,21 @@
 
 import sys
 
-console_state = {
+console_state_init = {
     "accumulator": 0,
     "ip": 1,
     "past_instructions": set(),
 }
 
+console_state = None
+
+
+def init_console():
+    
+    global console_state
+    console_state = console_state_init.copy()
+    console_state["past_instructions"] = set()
+    
 
 class InfiniteLoopException(Exception):
     pass
@@ -58,6 +67,7 @@ def run(instructions: dict):
         register_past_instruction(console_state)
 
     print(f"Answer: {console_state['accumulator']}.")
+    return 0
     
 
 def main(args):
@@ -74,7 +84,21 @@ def main(args):
             op, arg = l.split(' ')
             instructions.append((op, arg[0], int(arg[1:])))
 
-    run(instructions)
+    for idx, instr in enumerate(instructions):
+
+        if instr[0] not in frozenset(("nop", "jmp")):
+            continue
+
+        instructions_copy = instructions[:]
+        instructions_copy[idx] = tuple(("nop" if instr[0] == "jmp" else "jmp", instr[1], instr[2]))
+
+        init_console()
+        
+        try:
+            run(instructions_copy)
+        except Exception as e:
+            continue
+        
     return 0
 
 if __name__ == "__main__":
