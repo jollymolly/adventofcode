@@ -26,8 +26,24 @@ def main(args):
             None
         )
         if n is None:
-            print(f"Answer: {numbers[i]}.")
             break
+
+    num = numbers[i]
+
+    try:
+        for i in range(len(numbers) - 1):
+            for j in range(i + 1, len(numbers)):
+                seq = numbers[i:j]
+                s = sum(seq)
+
+                if s == num:
+                    m, x = min(seq), max(seq)
+                    raise StopIteration
+                elif s > num:
+                    break
+                
+    except StopIteration:
+        print(f"Answer: {m + x}.")
         
     return 0
 
