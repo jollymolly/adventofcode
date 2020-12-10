@@ -47,13 +47,15 @@ def main(args):
     seatFinder = SeatFinder()
     
     with open(args[1]) as inp:
-        tuple(map(
-            print, map(
-                seatFinder, filter(
-                    lambda s: s and len(s) == 10,map(str.strip, inp)
-                )
+        seatIds = tuple(map(seatFinder, filter(
+                lambda s: s and len(s) == 10, map(str.strip, inp)
             )
         ))
+
+        seatIds = sorted(seatIds)
+        for seatIdx, seatId in enumerate(seatIds[1:], 1):
+            if seatId - seatIds[seatIdx-1] > 1:
+                print(f"idx: {seatIdx}; seatIdx-1: {seatIds[seatIdx-1]}; seatId: {seatId}.")
         
     print(f"Answer: {seatFinder.seatId}.")
     
